@@ -1,0 +1,2196 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="description"
+    content="Free At Dawn — A Juneteenth Story. Run toward the truth. Run toward the dawn. A historical runner powered by Gemini AI.">
+  <meta property="og:title" content="Free At Dawn — A Juneteenth Story">
+  <meta property="og:description"
+    content="A historical runner game set on June 19, 1865. Run toward the truth. Run toward the dawn.">
+  <meta property="og:image" content="https://dev.to/social_previews/article/placeholder.png">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <title>Free At Dawn — A Juneteenth Story</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700&family=Crimson+Text:ital,wght@0,400;0,700;1,400&display=swap"
+    rel="stylesheet">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #04020e;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Crimson Text', Georgia, serif;
+      overflow: hidden;
+      touch-action: none;
+      /* Prevent bounce scroll */
+    }
+
+    #wrapper {
+      position: relative;
+      width: 100vw;
+      max-width: 960px;
+      aspect-ratio: 16 / 9;
+      user-select: none;
+      -webkit-user-select: none;
+      box-shadow: 0 0 50px rgba(0, 0, 0, 0.8);
+    }
+
+    @media (min-aspect-ratio: 16/9) {
+      #wrapper {
+        width: auto;
+        height: 100vh;
+      }
+    }
+
+    canvas {
+      display: block;
+      width: 100%;
+      height: 100%;
+      cursor: pointer;
+      image-rendering: optimizeSpeed;
+    }
+
+    /* ── SCREENS & TRANSITIONS ── */
+    .screen {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 4%;
+      background-size: cover;
+      transition: opacity .8s ease, clip-path .8s cubic-bezier(0.4, 0, 0.2, 1), transform .8s ease;
+      clip-path: circle(150% at 50% 50%);
+    }
+
+    .screen.hidden {
+      opacity: 0;
+      pointer-events: none;
+      transform: scale(1.05);
+      clip-path: circle(0% at 50% 50%);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    #goScreen.hidden {
+      clip-path: circle(0% at 50% 50%);
+      transform: scale(0.9);
+    }
+
+    #victoryScreen {
+      clip-path: circle(0% at 50% 50%);
+    }
+
+    #victoryScreen:not(.hidden) {
+      clip-path: circle(150% at 50% 50%);
+    }
+
+    /* START */
+    #startScreen {
+      background: radial-gradient(circle at center, rgba(0,0,0,0) 0%, rgba(5,2,10,0.95) 100%), linear-gradient(to bottom, rgba(4, 2, 14, .8), rgba(18, 6, 4, .95));
+    }
+
+    .title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(40px, 8vw, 80px);
+      font-weight: 800;
+      letter-spacing: 12px;
+      color: #ffeba1;
+      text-shadow: 0 0 50px rgba(255, 190, 60, .8), 0 4px 15px rgba(0, 0, 0, 0.9), 0 0 10px rgba(255,255,255,0.4);
+      margin-bottom: 8px;
+    }
+
+    .subtitle {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(10px, 2vw, 16px);
+      letter-spacing: 5px;
+      text-transform: uppercase;
+      color: #b88840;
+      margin-bottom: 30px;
+    }
+
+    .intro {
+      max-width: 600px;
+      color: #e4d0a8;
+      font-size: clamp(14px, 2.5vw, 18px);
+      line-height: 1.8;
+      font-style: italic;
+      margin-bottom: 30px;
+    }
+
+    .gold-btn {
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #ffd27a;
+      color: #ffd27a;
+      font-family: 'Cinzel', serif;
+      font-size: clamp(12px, 2vw, 16px);
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 14px 30px;
+      cursor: pointer;
+      transition: all .3s;
+      border-radius: 4px;
+      margin-bottom: 15px;
+      box-shadow: 0 0 15px rgba(255, 210, 122, 0.2);
+    }
+
+    .gold-btn:hover {
+      background: rgba(255, 210, 122, .2);
+      box-shadow: 0 0 25px rgba(255, 210, 122, 0.5);
+      transform: translateY(-2px);
+    }
+
+    .api-section {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+      margin-top: 15px;
+    }
+
+    .api-toggle {
+      color: #ffd27a;
+      font-size: 13px;
+      letter-spacing: 1px;
+      cursor: pointer;
+      text-decoration: underline;
+      opacity: 0.8;
+      font-family: sans-serif;
+    }
+
+    .api-toggle:hover {
+      opacity: 1;
+    }
+
+    #apiRow {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #apiRow input {
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid rgba(255, 210, 122, .4);
+      color: #ffd27a;
+      padding: 10px 15px;
+      font-size: 14px;
+      font-family: monospace;
+      width: 320px;
+      max-width: 80vw;
+      outline: none;
+      border-radius: 4px;
+    }
+
+    #apiRow button {
+      background: transparent;
+      border: 1px solid rgba(255, 210, 122, .4);
+      color: #ffd27a;
+      padding: 10px 20px;
+      cursor: pointer;
+      font-size: 14px;
+      font-family: 'Cinzel', serif;
+      border-radius: 4px;
+      transition: 0.2s;
+    }
+
+    #apiRow button:hover {
+      background: rgba(255, 210, 122, .2);
+    }
+
+    #apiStatus {
+      color: #8da86f;
+      font-size: 12px;
+      letter-spacing: 1px;
+      margin-top: 5px;
+      font-family: sans-serif;
+    }
+
+    .hint {
+      color: #b88840;
+      font-size: 12px;
+      letter-spacing: 1.5px;
+      margin-top: 15px;
+      opacity: 0.7;
+      font-family: sans-serif;
+    }
+
+    /* HUD */
+    #hud {
+      position: absolute;
+      top: 20px;
+      left: 20px;
+      right: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      pointer-events: none;
+    }
+
+    .hud-block {
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    }
+
+    .hud-lbl {
+      color: rgba(255, 222, 160, .8);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      font-family: 'Cinzel', serif;
+    }
+
+    .hud-val {
+      color: #ffd27a;
+      font-size: 20px;
+      font-family: monospace;
+      font-weight: bold;
+    }
+
+    #warningIndicator {
+      color: #ff4444;
+      font-size: 14px;
+      font-weight: bold;
+      letter-spacing: 2px;
+      text-shadow: 0 0 10px red;
+      opacity: 0;
+      transition: opacity 0.3s;
+      text-transform: uppercase;
+      font-family: 'Cinzel', serif;
+      text-align: center;
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: 20px;
+    }
+
+    /* PROGRESS BAR */
+    #progWrap {
+      position: absolute;
+      bottom: 50px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60%;
+      max-width: 500px;
+      pointer-events: none;
+      z-index: 10;
+    }
+    
+    #startScreen:not(.hidden) ~ #progWrap {
+      display: none !important;
+    }
+
+    .prog-lbl {
+      color: rgba(255, 210, 122, .7);
+      font-size: 11px;
+      letter-spacing: 2px;
+      text-align: center;
+      margin-bottom: 6px;
+      font-family: 'Cinzel', serif;
+      text-transform: uppercase;
+    }
+
+    .prog-track {
+      height: 4px;
+      background: rgba(0, 0, 0, .5);
+      border: 1px solid rgba(255, 255, 255, .1);
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .prog-fill {
+      height: 100%;
+      background: linear-gradient(to right, #7a4010, #ffd27a);
+      border-radius: 2px;
+      transition: width .3s;
+      box-shadow: 0 0 10px #ffd27a;
+    }
+
+    .cp-dots {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      padding: 0 1px;
+    }
+
+    .cp-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: rgba(0, 0, 0, .6);
+      border: 1px solid rgba(255, 200, 100, .3);
+      transition: all .4s;
+    }
+
+    .cp-dot.lit {
+      background: #ffd27a;
+      border-color: #fff;
+      box-shadow: 0 0 10px #ffd27a;
+      transform: scale(1.3);
+    }
+
+    /* TICKER */
+    #tickerWrap {
+      position: absolute;
+      bottom: 10px;
+      left: 0;
+      right: 0;
+      height: 24px;
+      background: rgba(0, 0, 0, 0.6);
+      display: flex;
+      align-items: center;
+      overflow: hidden;
+      border-top: 1px solid rgba(255, 210, 122, 0.2);
+      border-bottom: 1px solid rgba(255, 210, 122, 0.2);
+      pointer-events: none;
+      z-index: 10;
+    }
+
+    .ticker-content {
+      white-space: nowrap;
+      color: #ffd27a;
+      font-size: 13px;
+      font-family: 'Cinzel', serif;
+      animation: tickerScroll 20s linear infinite;
+      text-shadow: 0 1px 2px #000;
+    }
+
+    @keyframes tickerScroll {
+      0% {
+        transform: translateX(100vw);
+      }
+
+      100% {
+        transform: translateX(-100%);
+      }
+    }
+
+    /* CHECKPOINT */
+    #cpScreen {
+      background: radial-gradient(circle at center, rgba(10, 5, 20, 0.95) 0%, rgba(0, 0, 0, 0.98) 100%);
+      backdrop-filter: blur(12px);
+    }
+
+    .cp-tag {
+      font-family: 'Cinzel', serif;
+      font-size: 12px;
+      letter-spacing: 4px;
+      color: #ffd27a;
+      text-transform: uppercase;
+      margin-bottom: 15px;
+    }
+
+    .cp-year {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(32px, 5vw, 48px);
+      color: #fff8ec;
+      margin-bottom: 10px;
+      text-shadow: 0 0 20px rgba(255, 255, 255, 0.3);
+    }
+
+    .cp-headline {
+      font-size: clamp(16px, 2.5vw, 22px);
+      color: #c09050;
+      letter-spacing: 1px;
+      font-style: italic;
+      margin-bottom: 30px;
+    }
+
+    .cp-body {
+      color: #fff;
+      font-size: clamp(14px, 3vw, 18px);
+      line-height: 1.6;
+      max-width: 600px;
+      margin: 0 auto 30px;
+      min-height: 100px;
+      white-space: pre-wrap;
+    }
+
+    .cp-badge {
+      font-family: sans-serif;
+      font-size: 10px;
+      color: rgba(255, 255, 255, 0.4);
+      margin-bottom: 20px;
+      letter-spacing: 1px;
+    }
+
+    .pulsing {
+      color: rgba(255, 210, 122, .45);
+      font-style: italic;
+      animation: pulse 1.4s ease-in-out infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: .3
+      }
+
+      50% {
+        opacity: .9
+      }
+    }
+
+    /* VICTORY */
+    #victoryScreen {
+      background: radial-gradient(circle at center, rgba(170, 80, 10, .85) 0%, rgba(50, 20, 4, .95) 100%);
+    }
+
+    .v-icon {
+      font-size: 60px;
+      margin-bottom: 10px;
+      text-shadow: 0 0 30px #ffd27a;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-10px);
+      }
+    }
+
+    .v-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(40px, 8vw, 72px);
+      color: #fff8d0;
+      letter-spacing: 12px;
+      font-weight: 700;
+      text-shadow: 0 0 50px rgba(255, 220, 100, .8), 0 0 10px #fff;
+      margin-bottom: 15px;
+    }
+
+    .v-sub {
+      font-family: 'Cinzel', serif;
+      font-size: 14px;
+      color: #ffd27a;
+      letter-spacing: 6px;
+      text-transform: uppercase;
+      margin-bottom: 30px;
+    }
+
+    .v-body {
+      max-width: 600px;
+      color: #fff0cc;
+      font-size: clamp(15px, 2.5vw, 18px);
+      line-height: 1.9;
+      font-style: italic;
+      margin-bottom: 30px;
+    }
+
+    .v-stats {
+      color: #ffd27a;
+      font-size: 16px;
+      font-family: 'Cinzel', serif;
+      letter-spacing: 2px;
+      margin-bottom: 10px;
+      text-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
+    }
+
+    .v-stars {
+      font-size: 24px;
+      color: #ffd27a;
+      margin-bottom: 30px;
+      letter-spacing: 5px;
+      text-shadow: 0 0 15px #ffd27a;
+    }
+
+    .v-best {
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 12px;
+      margin-bottom: 20px;
+      font-family: sans-serif;
+      letter-spacing: 1px;
+    }
+
+    /* GAME OVER */
+    #goScreen {
+      background: radial-gradient(circle at center, rgba(40, 10, 10, .9) 0%, rgba(5, 0, 0, .95) 100%);
+    }
+
+    .go-title {
+      font-family: 'Cinzel', serif;
+      font-size: clamp(32px, 6vw, 54px);
+      color: #e05040;
+      letter-spacing: 6px;
+      font-weight: 700;
+      margin-bottom: 15px;
+      text-shadow: 0 0 20px rgba(255, 0, 0, 0.5);
+    }
+
+    .go-body {
+      max-width: 500px;
+      color: #c08070;
+      font-size: clamp(15px, 2.5vw, 18px);
+      line-height: 1.9;
+      font-style: italic;
+      margin-bottom: 40px;
+    }
+
+    .red-btn {
+      background: rgba(0, 0, 0, 0.5);
+      border: 2px solid #e05040;
+      color: #e05040;
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      padding: 14px 40px;
+      cursor: pointer;
+      transition: all .3s;
+      border-radius: 4px;
+    }
+
+    .red-btn:hover {
+      background: rgba(224, 80, 64, .2);
+      box-shadow: 0 0 20px rgba(224, 80, 64, .4);
+      transform: translateY(-2px);
+    }
+
+    /* TUTORIAL OVERLAY & TOUCH ZONES */
+    #tutorial {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: white;
+      font-family: 'Cinzel', serif;
+      font-size: 24px;
+      letter-spacing: 4px;
+      text-shadow: 0 0 10px rgba(0, 0, 0, 0.8);
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+      text-align: center;
+      z-index: 5;
+    }
+
+    .tut-arrow {
+      font-size: 40px;
+      display: block;
+      margin-bottom: 10px;
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      100% {
+        transform: translateY(0);
+      }
+
+      50% {
+        transform: translateY(-15px);
+      }
+    }
+
+    #touchZone {
+      position: absolute;
+      inset: 0;
+      bottom: 80px;
+      display: flex;
+      align-items: flex-end;
+      justify-content: center;
+      padding-bottom: 10%;
+      color: rgba(255, 255, 255, 0.15);
+      font-family: 'Cinzel', serif;
+      font-size: 16px;
+      letter-spacing: 3px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.5s;
+    }
+
+    /* CREDITS */
+    .credits {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.3);
+      margin-top: 30px;
+      font-family: sans-serif;
+      line-height: 1.5;
+      letter-spacing: 0.5px;
+    }
+
+    .credits a {
+      color: rgba(255, 210, 122, 0.6);
+      text-decoration: none;
+    }
+
+    .credits a:hover {
+      text-decoration: underline;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="wrapper">
+    <canvas id="c"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hidden">
+      <div class="hud-box">
+        <div class="hud-lbl">Distance</div>
+        <div class="hud-val" id="distVal">0.0 mi</div>
+      </div>
+      <div id="warningIndicator">⚠️ Pursuer Closing In ⚠️</div>
+      <div class="hud-box" style="text-align:center; cursor:pointer;" onclick="togglePause()">
+        <div class="hud-lbl">Controls</div>
+        <div class="hud-val">⏸ PAUSE</div>
+      </div>
+      <div class="hud-box" style="text-align:right">
+        <div class="hud-lbl">To Freedom</div>
+        <div class="hud-val" id="freeVal">5.0 mi</div>
+      </div>
+    </div>
+
+    <div id="progWrap" class="hidden">
+      <div class="prog-lbl">Journey to Dawn</div>
+      <div class="prog-track">
+        <div class="prog-fill" id="progFill" style="width:0%"></div>
+      </div>
+      <div class="cp-dots">
+        <div class="cp-dot" id="d0"></div>
+        <div class="cp-dot" id="d1"></div>
+        <div class="cp-dot" id="d2"></div>
+        <div class="cp-dot" id="d3"></div>
+        <div class="cp-dot" id="d4"></div>
+      </div>
+    </div>
+
+    <div id="tickerWrap" class="hidden">
+      <div class="ticker-content" id="tickerText"></div>
+    </div>
+
+    <div id="tutorial">
+      <span class="tut-arrow">↑</span>
+      SWIPE OR SPACE TO JUMP
+    </div>
+
+    <div id="touchZone">TAP OR SWIPE UP TO JUMP</div>
+
+    <!-- START SCREEN -->
+    <div class="screen" id="startScreen">
+      <div class="subtitle" style="color:#ffae42; margin-bottom:10px; letter-spacing:8px;">JUNE SOLSTICE GAME JAM 2026</div>
+      <div class="title" style="text-shadow: 0 0 50px rgba(255,190,60,0.8), 0 4px 15px rgba(0,0,0,0.9); font-size: clamp(40px, 8vw, 80px);">FREE AT DAWN</div>
+      <div class="subtitle" style="margin-bottom: 10px;">A Juneteenth Story · June 19, 1865</div>
+      <div class="subtitle" style="font-size: clamp(10px, 1.5vw, 14px); color: #c4b5a3;">Survive the Shortest Night. Run toward the Longest Day.</div>
+      <div class="intro">
+        "The Emancipation Proclamation was signed two years ago —<br>
+        but no one in Texas was told. Tonight, word finally spreads.<br>
+        Run toward the truth. Run toward the light.<br>
+        Run toward the dawn."
+      </div>
+      <button class="gold-btn" onclick="startGame()">Begin the Journey</button>
+      <br><br>
+      <div class="hint">SPACE / UP ARROW / SWIPE TO JUMP &nbsp; | &nbsp; ESC TO PAUSE &nbsp; | &nbsp; DOUBLE JUMP ALLOWED</div>
+      <div class="credits" style="background: rgba(5,2,10,0.8); padding: 10px; border-radius: 5px; max-width: 800px; z-index: 100; position: relative;">
+        Powered by Gemini AI &nbsp;|&nbsp; Historical facts sourced from General Order No. 3 and the Texas State Historical Association.
+      </div>
+    </div>
+
+    <!-- CHECKPOINT SCREEN -->
+    <div class="screen hidden" id="cpScreen">
+      <div class="cp-tag" id="cpTag">Checkpoint 1 of 5</div>
+      <div class="cp-year" id="cpYear">—</div>
+      <div class="cp-headline" id="cpHead">—</div>
+      <div class="cp-badge" id="cpBadge">POWERED BY HISTORY & GEMINI AI</div>
+      <div class="cp-body" id="cpBody"></div>
+      <div id="choiceContainer" style="display: none; gap: 20px; justify-content: center; margin-top: 30px; flex-wrap: wrap;">
+         <button class="gold-btn" id="btnChoiceA" onclick="makeChoice('A')">Choice A</button>
+         <button class="gold-btn" id="btnChoiceB" onclick="makeChoice('B')">Choice B</button>
+      </div>
+      <button class="gold-btn" id="continueBtn" onclick="resumeGame()" style="display:none; margin-top: 20px;">Continue Running →</button>
+    </div>
+
+    <!-- VICTORY SCREEN -->
+    <div class="screen hidden" id="victoryScreen">
+      <div class="v-icon">🌅</div>
+      <div class="v-title">FREEDOM</div>
+      <div class="v-sub">June 19, 1865 · Juneteenth</div>
+      <div class="v-body" id="vBody">
+        "The people of Texas are informed that... all slaves are free. This involves an absolute equality of personal
+        rights and rights of property."<br>
+        — General Order No. 3, read by Gen. Gordon Granger
+      </div>
+      <div class="v-stats" id="vStats"></div>
+      <div class="v-stars" id="vStars"></div>
+      <div class="v-best" id="vBest"></div>
+      <div>
+        <button class="gold-btn" onclick="startGame()">Run Again</button>
+        <button class="gold-btn" style="margin-left:10px" onclick="shareScore()">Share Score</button>
+      </div>
+      <div class="credits">
+        "We was all walkin' on golden clouds... Everybody went wild... We was free." — Felix Haywood
+      </div>
+    </div>
+
+    <!-- GAME OVER SCREEN -->
+    <div class="screen hidden" id="goScreen">
+      <div class="go-title">Captured</div>
+      <div class="go-body">
+        Thousands were caught and turned back.<br>
+        But they rose. And tried again. And again.<br>
+        The road to freedom was paved by those<br>
+        who refused to stop running.
+      </div>
+      <button class="red-btn" onclick="startGame()">Try Again</button>
+      <br><br>
+      <button class="gold-btn" onclick="quitToMenu()">Quit to Title</button>
+    </div>
+    
+    <!-- PAUSE SCREEN -->
+    <div class="screen hidden" id="pauseScreen" style="background: rgba(5,2,10,0.85); backdrop-filter: blur(10px);">
+      <div class="title" style="font-size: clamp(30px, 6vw, 60px);">PAUSED</div>
+      <div class="subtitle">The Journey is Waiting</div>
+      <br><br>
+      <button class="gold-btn" onclick="togglePause()">Resume Journey</button><br>
+      <button class="gold-btn" onclick="startGame()">Restart Run</button><br>
+      <button class="gold-btn" onclick="quitToMenu()">Quit to Title</button>
+    </div>
+  </div>
+
+  <script>
+    // ═══════════════════════════════════════════════
+    //  FREE AT DAWN  —  Competition Build
+    //  Juneteenth Freedom Runner · HTML5/Canvas/JS
+    // ═══════════════════════════════════════════════
+
+    const canvas = document.getElementById('c');
+    const ctx = canvas.getContext('2d');
+    let W, H, GY;
+
+    function resize() {
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width;
+      canvas.height = rect.height;
+      W = canvas.width;
+      H = canvas.height;
+      GY = H * 0.8; // Ground Y position
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    // ── GEMINI API & CACHE ──────────────────────────
+    // Paste your Gemini API key below. If left blank or invalid, the game will use built-in fallback stories.
+    const GEMINI_API_KEY = 'AIzaSyAa-_JhZzlv_cNzgMsY_zJkF4I_zLQi10Y';
+
+    const CDATA = [
+      {
+        tag: 'Checkpoint 1 · Departure', year: 'June 18, 1865 · Midnight', head: 'The Secret Begins to Spread',
+        story: `Word travels in whispers through the Texas night. For two years after Lincoln's Emancipation Proclamation, slaveholders in Texas deliberately hid the news. Tonight a Union soldier speaks the truth aloud near the docks of Galveston. A woman tells her sister. Her sister tells ten more. The lie is cracking. You run before they can silence it again.`,
+        dilemma: `You slip away from the plantation. The main road is faster but patrolled. The river is safer but treacherous. Which way?`,
+        optA: `Take the Road`, envA: `road`, obsA: `patrols`, weatherA: `clear`,
+        optB: `Wade the River`, envB: `river`, obsB: `fallen_trees`, weatherB: `fog`
+      },
+      {
+        tag: 'Checkpoint 2 · The Road', year: 'June 19, 1865 · 2:00 AM', head: 'The Darkness Is Your Shield',
+        story: `In the pre-dawn hours the darkness protects you. You are not alone on this road — thousands of enslaved people across Texas begin moving tonight. Some follow the North Star. Some follow the sound of Union drums faint on the wind. Some simply run away from what was — trusting that anything else is better. Away is enough.`,
+        dilemma: `You hear the barking of hounds echoing from the distant treeline. The open field offers speed, but no cover.`,
+        optA: `Brave the Hounds`, envA: `forest`, obsA: `dogs`, weatherA: `storm`,
+        optB: `Sprint the Field`, envA: `field`, obsA: `fence`, weatherB: `clear`
+      },
+      {
+        tag: 'Checkpoint 3 · Resistance', year: 'June 19, 1865 · 4:00 AM', head: 'They Try to Turn You Back',
+        story: `Slaveholders send riders into the night. They spread new lies: "Lincoln is dead — it was a trick — nothing has changed." But 250,000 people in Texas are already choosing to believe their own freedom over the words of those who profited from their bondage. You have heard the truth. It cannot be unheard.`,
+        dilemma: `Riders are blocking the northern path. You must detour through the dense thicket or try to outrun them.`,
+        optA: `Outrun the Riders`, envA: `road`, obsA: `patrols`, weatherA: `clear`,
+        optB: `Push through Thicket`, envA: `forest`, obsA: `fallen_trees`, weatherB: `rain`
+      },
+      {
+        tag: 'Checkpoint 4 · First Light', year: 'June 19, 1865 · 5:30 AM', head: 'The Sky Begins to Change',
+        story: `The horizon turns the color of fire and you know you are close. In Galveston, General Gordon Granger is already drafting the words of General Order No. 3. Freedmen and women gather in the streets — trembling, weeping, silent with held breath. The words they are about to hear cannot undo the past. But they will determine what comes next.`,
+        dilemma: `Exhaustion sets in. A shortcut through the river could save time, but the currents are freezing and strong.`,
+        optA: `Cross the River`, envA: `river`, obsA: `fallen_trees`, weatherA: `fog`,
+        optB: `Stay on the Dirt Path`, envA: `field`, obsA: `fence`, weatherB: `clear`
+      },
+      {
+        tag: 'Checkpoint 5 · Dawn', year: 'June 19, 1865 · Sunrise', head: 'The Sun Rises. You Are Free.',
+        story: `"The people of Texas are informed that, in accordance with a Proclamation from the Executive of the United States, all slaves are free." The crowd erupts. People fall to their knees. They weep, they dance, they hold each other. They name this day Juneteenth. This dawn. This moment. You. Free.`,
+        dilemma: `The final stretch to the settlement. Do you take the grand road or the quiet river path?`,
+        optA: `Walk the Road`, envA: `road`, obsA: `fence`, weatherA: `clear`,
+        optB: `Follow the River`, envA: `river`, obsA: `fallen_trees`, weatherB: `clear`
+      }
+    ];
+
+    const TICKER_FACTS = [
+      "General Order No. 3 was read by General Gordon Granger in Galveston, Texas.",
+      "Over 250,000 enslaved Black people in Texas learned of their freedom on June 19, 1865.",
+      "The Emancipation Proclamation was issued over two years earlier on Jan 1, 1863.",
+      "Early celebrations involved reading the Emancipation Proclamation and singing spirituals.",
+      "Red foods like strawberry soda and red velvet cake symbolize resilience and joy.",
+      "Juneteenth became a federal holiday in the United States on June 17, 2021.",
+      "Freedmen quickly sought to reunite families separated by the slave trade.",
+      "Many freed people changed their names and demanded wages for their labor."
+    ];
+
+    let preloadedStories = [null, null, null, null, null];
+    let isPrefetching = false;
+
+    // Mid-run whisper narration system
+    let whisperQueue = [];
+    let currentWhisper = null;
+    let whisperTimer = 0;
+    const WHISPER_DISPLAY_FRAMES = 200; // ~3.3 seconds at 60fps
+
+    const WHISPER_PROMPTS = [
+      `Write ONE vivid sentence (2nd person, "you") about the feeling of running barefoot through a Texas night toward freedom on June 19, 1865. Max 20 words. Present tense. No quotes.`,
+      `Write ONE vivid sentence (2nd person, "you") about the North Star guiding an enslaved person to freedom on the night of Juneteenth 1865. Max 20 words. Present tense. No quotes.`,
+      `Write ONE vivid sentence (2nd person, "you") about hearing drums in the distance that could mean Union soldiers on the night of June 19, 1865. Max 20 words. Present tense. No quotes.`,
+      `Write ONE vivid sentence (2nd person, "you") about the feeling of cool night dew on your feet as you run toward freedom on June 19, 1865. Max 20 words. Present tense. No quotes.`,
+      `Write ONE vivid sentence (2nd person, "you") about whispering the word "free" for the first time while running toward Galveston on June 19, 1865. Max 20 words. Present tense. No quotes.`
+    ];
+
+    async function fetchGeminiWhisper() {
+      const gemKey = GEMINI_API_KEY;
+      if (!gemKey || whisperQueue.length > 2) return;
+      try {
+        const prompt = WHISPER_PROMPTS[Math.floor(Math.random() * WHISPER_PROMPTS.length)];
+        const r = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`,
+          {
+            method: 'POST', headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              contents: [{ parts: [{ text: prompt }] }],
+              generationConfig: { maxOutputTokens: 50, temperature: 1.0 }
+            })
+          }
+        );
+        const d = await r.json();
+        let text = d.candidates?.[0]?.content?.parts?.[0]?.text?.trim() || null;
+        if (text) {
+          text = text.replace(/\*/g, '').replace(/^"|"$/g, '');
+          if (text.length > 10) whisperQueue.push(text);
+        }
+      } catch (e) { }
+    }
+
+    function generatePrompt(idx) {
+      const prompts = [
+        "First leg of the escape. Sneaking away from the plantation. Provide a 2-sentence historical narrative ('story') AND a 2-sentence dilemma. Return JSON: { 'story': '...', 'dilemma': '...', 'optA': 'Short action', 'envA': 'forest'|'field'|'river'|'road', 'obsA': 'dogs'|'patrols'|'fallen_trees'|'fence', 'weatherA': 'clear'|'rain'|'fog'|'storm', 'optB': 'Short action', 'envB': '...', 'obsB': '...', 'weatherB': '...' }",
+        "Deep in the Texas wilderness. Hearing pursuit. Provide a historical narrative and a survival dilemma. Return JSON with 'story', 'dilemma', 'optA', 'envA', 'obsA', 'weatherA', 'optB', 'envB', 'obsB', 'weatherB'.",
+        "Crossing difficult terrain. Lanterns are visible. Provide a stealth dilemma. Return JSON with 'story', 'dilemma', 'optA', 'envA', 'obsA', 'weatherA', 'optB', 'envB', 'obsB', 'weatherB'.",
+        "The final stretch before dawn. Exhaustion. Provide a desperation dilemma. Return JSON with 'story', 'dilemma', 'optA', 'envA', 'obsA', 'weatherA', 'optB', 'envB', 'obsB', 'weatherB'.",
+        "Dawn breaks. Reaching a safe settlement. A final choice of how to enter freedom. Return JSON with 'story', 'dilemma', 'optA', 'envA', 'obsA', 'weatherA', 'optB', 'envB', 'obsB', 'weatherB'."
+      ];
+      return prompts[idx];
+    }
+
+    async function fetchGemini(idx) {
+      const gemKey = GEMINI_API_KEY;
+      if (!gemKey) return null;
+
+      try {
+        const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${gemKey}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: generatePrompt(idx) }] }],
+            systemInstruction: { parts: [{ text: 'You are a historical API for a Juneteenth game. Always return ONLY valid JSON containing "story", "dilemma", "optA", "envA", "obsA", "weatherA", "optB", "envB", "obsB", "weatherB" without any markdown wrapping.' }] },
+            generationConfig: { temperature: 0.7, maxOutputTokens: 250 }
+          })
+        });
+        const data = await response.json();
+        if (data.candidates && data.candidates[0].content.parts[0].text) {
+          let text = data.candidates[0].content.parts[0].text;
+          text = text.replace(/```json/g, '').replace(/```/g, '').trim();
+          const parsed = JSON.parse(text);
+          return parsed; // Return the entire parsed JSON object for choices
+        }
+      } catch (e) {
+        console.error("Gemini API Error:", e);
+      }
+      return null;
+    }
+
+    async function prefetchAllStories() {
+      const gemKey = GEMINI_API_KEY;
+      if (isPrefetching || !gemKey) return;
+      isPrefetching = true;
+      for (let i = 0; i < 5; i++) {
+        preloadedStories[i] = await fetchGemini(i);
+      }
+      isPrefetching = false;
+    }
+
+    // ── AUDIO SYSTEM ──────────────────────────────────
+    let audioCtx, masterGain, footstepOsc, ambientOsc, heartbeatOsc;
+    let isAudioInit = false;
+
+    function initAudio() {
+      if (isAudioInit) return;
+      try {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        masterGain = audioCtx.createGain();
+        masterGain.gain.value = 0.5;
+        masterGain.connect(audioCtx.destination);
+
+        // Ambient night sound
+        ambientOsc = audioCtx.createOscillator();
+        ambientOsc.type = 'sine';
+        ambientOsc.frequency.value = 400;
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = 0.1;
+        const lfoGain = audioCtx.createGain();
+        lfoGain.gain.value = 50;
+        lfo.connect(lfoGain);
+        lfoGain.connect(ambientOsc.frequency);
+
+        const ambVol = audioCtx.createGain();
+        ambVol.gain.value = 0.02;
+        ambientOsc.connect(ambVol);
+        ambVol.connect(masterGain);
+
+        ambientOsc.start();
+        lfo.start();
+
+        // Heartbeat for pursuer tension
+        heartbeatOsc = audioCtx.createOscillator();
+        heartbeatOsc.type = 'sine';
+        heartbeatOsc.frequency.value = 50;
+        const hbGain = audioCtx.createGain();
+        hbGain.gain.value = 0;
+        heartbeatOsc.connect(hbGain);
+        hbGain.connect(masterGain);
+        heartbeatOsc.start();
+
+        // Attach heartbeat gain to global state for updating
+        state.hbGainNode = hbGain;
+
+        isAudioInit = true;
+      } catch (e) { console.log('Audio init failed', e); }
+    }
+
+    function playTone(freq, dur, type = 'sine', vol = 0.1, sweep = false) {
+      if (!audioCtx) return;
+      try {
+        const o = audioCtx.createOscillator();
+        const g = audioCtx.createGain();
+        o.connect(g); g.connect(masterGain);
+        o.type = type;
+        o.frequency.setValueAtTime(freq, audioCtx.currentTime);
+        if (sweep) o.frequency.exponentialRampToValueAtTime(freq * 0.5, audioCtx.currentTime + dur);
+
+        g.gain.setValueAtTime(vol, audioCtx.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + dur);
+        o.start(); o.stop(audioCtx.currentTime + dur);
+      } catch (e) { }
+    }
+
+    function sfxJump() { playTone(220, .15, 'triangle', .1); playTone(330, .1, 'sine', .05); }
+    function sfxDie() { playTone(150, .4, 'sawtooth', .2, true); playTone(100, .5, 'square', .15, true); }
+    function sfxCp() { [440, 554, 659, 880].forEach((f, i) => setTimeout(() => playTone(f, .4, 'sine', .15), i * 100)); }
+    function sfxPower() { [659, 880, 1108].forEach((f, i) => setTimeout(() => playTone(f, .2, 'sine', .15), i * 50)); }
+    function sfxWin() {
+      [440, 554, 659, 880, 1108].forEach((f, i) => setTimeout(() => playTone(f, .5, 'sine', .2), i * 150));
+      setTimeout(() => { playTone(880, 1.5, 'sine', .2); playTone(1318, 1.5, 'sine', .15); }, 900);
+    }
+    function sfxStep(isRight) {
+      if (state.mode !== 'playing') return;
+      playTone(isRight ? 120 : 100, .05, 'triangle', .05);
+    }
+
+    // ── SKY & EFFECTS SYSTEM ─────────────────────────
+    // 8 stops for smoother dawn transition
+    const SKY = [
+      [{ r: 5, g: 2, b: 15 }, { r: 10, g: 5, b: 25 }],    // 0: Deep night
+      [{ r: 15, g: 8, b: 35 }, { r: 25, g: 10, b: 45 }],   // 1: Indigo
+      [{ r: 25, g: 15, b: 45 }, { r: 50, g: 20, b: 55 }],   // 2: Violet
+      [{ r: 45, g: 20, b: 50 }, { r: 100, g: 30, b: 40 }],  // 3: Dark Crimson
+      [{ r: 80, g: 30, b: 45 }, { r: 160, g: 50, b: 35 }],  // 4: Red/Orange
+      [{ r: 120, g: 45, b: 35 }, { r: 200, g: 90, b: 30 }],  // 5: Orange
+      [{ r: 160, g: 80, b: 40 }, { r: 230, g: 140, b: 50 }], // 6: Golden Orange
+      [{ r: 200, g: 120, b: 50 }, { r: 255, g: 200, b: 90 }] // 7: Golden Dawn
+    ];
+    function lc(a, b, t) { return { r: a.r + (b.r - a.r) * t | 0, g: a.g + (b.g - a.g) * t | 0, b: a.b + (b.b - a.b) * t | 0 }; }
+    function rgb(c) { return `rgb(${c.r},${c.g},${c.b})`; }
+    function skyAt(p, layer) {
+      const i = p * 7, lo = Math.min(6, i | 0), hi = Math.min(7, lo + 1), t = i - lo;
+      return lc(SKY[lo][layer], SKY[hi][layer], t);
+    }
+
+    const STARS = Array.from({ length: 150 }, () => ({
+      x: Math.random(), y: Math.random() * 0.6,
+      r: Math.random() * 1.5 + .5, phase: Math.random() * Math.PI * 2, sp: Math.random() * .03 + .01
+    }));
+
+    const CLOUDS = Array.from({ length: 8 }, () => ({
+      x: Math.random() * 2, y: Math.random() * 0.3, w: Math.random() * 0.3 + 0.2, h: Math.random() * 0.05 + 0.02, speed: Math.random() * 0.02 + 0.01
+    }));
+
+    function drawSky(p, f) {
+      let top = skyAt(p, 0), bot = skyAt(p, 1);
+      
+      // Dynamic Environment Tinting
+      if (state.currentEnv === 'river') {
+        top.b = Math.min(255, top.b + 30); bot.b = Math.min(255, bot.b + 40);
+      } else if (state.currentEnv === 'field') {
+        top.r = Math.min(255, top.r + 20); top.g = Math.min(255, top.g + 15);
+      } else if (state.currentEnv === 'road') {
+        top.r = Math.max(0, top.r - 10); bot.b = Math.max(0, bot.b - 10);
+      } // forest is default
+
+      const g = ctx.createLinearGradient(0, 0, 0, GY);
+      g.addColorStop(0, rgb(top)); g.addColorStop(1, rgb(bot));
+      ctx.fillStyle = g; ctx.fillRect(0, 0, W, GY);
+
+      // Stars
+      const starAlpha = Math.max(0, 1 - p * 2.5);
+      if (starAlpha > 0) {
+        STARS.forEach(s => {
+          const tw = .5 + Math.sin(s.phase + f * s.sp) * .5;
+          ctx.beginPath(); ctx.arc(s.x * W, s.y * H, s.r, 0, Math.PI * 2);
+          ctx.fillStyle = `rgba(255,255,255,${starAlpha * tw})`; ctx.fill();
+        });
+      }
+
+      // Moon
+      const moonAlpha = Math.max(0, 1 - p * 3);
+      if (moonAlpha > 0) {
+        const mx = W * .15, my = H * .15;
+        ctx.save(); ctx.globalAlpha = moonAlpha;
+        const mg = ctx.createRadialGradient(mx, my, 10, mx, my, 50);
+        mg.addColorStop(0, 'rgba(235,230,200,.2)'); mg.addColorStop(1, 'rgba(235,230,200,0)');
+        ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx, my, 50, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = 'rgba(240,235,210,.9)'; ctx.beginPath(); ctx.arc(mx, my, 18, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = rgb(skyAt(p, 0)); ctx.beginPath(); ctx.arc(mx + 8, my - 4, 14, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      // Clouds layer
+      ctx.save();
+      const cr = 20 + p * 180 | 0, cg = 20 + p * 100 | 0, cb = 30 + p * 50 | 0;
+      const cloudAlpha = 0.1 + p * 0.4; // More visible at dawn
+      ctx.fillStyle = `rgba(${cr},${cg},${cb},${cloudAlpha})`;
+      CLOUDS.forEach(c => {
+        c.x -= c.speed * state.spd * 0.001; // slow drift
+        if (c.x + c.w < 0) { c.x = 1 + c.w; c.y = Math.random() * 0.3; } // wrap
+        const cx = c.x * W;
+        const cy = c.y * H;
+        const cw = c.w * W;
+        const ch = c.h * H;
+        ctx.beginPath();
+        ctx.ellipse(cx, cy, cw / 2, ch / 2, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx + cw * 0.2, cy - ch * 0.3, cw * 0.3, ch * 0.6, 0, 0, Math.PI * 2);
+        ctx.ellipse(cx - cw * 0.2, cy - ch * 0.2, cw * 0.25, ch * 0.5, 0, 0, Math.PI * 2);
+        ctx.fill();
+      });
+      ctx.restore();
+
+      // Volumetric Sun Rays & Corona
+      const sunAlpha = Math.max(0, (p - .3) * 1.5);
+      if (sunAlpha > 0) {
+        const riseP = Math.min(1, Math.max(0, (p - 0.6) * 2.5));
+        const sy = GY - 20 - riseP * (H * 0.4);
+        const sx = W * .8;
+
+        ctx.save();
+        // Horizon glow
+        const hg = ctx.createLinearGradient(0, GY - H * 0.3, 0, GY);
+        hg.addColorStop(0, 'rgba(255,180,50,0)');
+        hg.addColorStop(1, `rgba(255,150,40,${sunAlpha * 0.4})`);
+        ctx.fillStyle = hg; ctx.fillRect(0, 0, W, GY);
+
+        // Rays
+        ctx.globalAlpha = sunAlpha * 0.3;
+        ctx.fillStyle = 'rgba(255, 210, 100, 1)';
+        for (let i = 0; i < 8; i++) {
+          const angle = (i / 8) * Math.PI + Math.PI + (f * 0.001); // Sweep top half
+          ctx.beginPath();
+          ctx.moveTo(sx, sy);
+          ctx.lineTo(sx + Math.cos(angle - 0.2) * W * 1.5, sy + Math.sin(angle - 0.2) * W * 1.5);
+          ctx.lineTo(sx + Math.cos(angle + 0.2) * W * 1.5, sy + Math.sin(angle + 0.2) * W * 1.5);
+          ctx.fill();
+        }
+
+        // Sun Disc
+        ctx.globalAlpha = sunAlpha;
+        const sg = ctx.createRadialGradient(sx, sy, 10, sx, sy, 100);
+        sg.addColorStop(0, `rgba(255,220,100,${sunAlpha})`);
+        sg.addColorStop(1, 'rgba(255,150,40,0)');
+        ctx.fillStyle = sg; ctx.beginPath(); ctx.arc(sx, sy, 100, 0, Math.PI * 2); ctx.fill();
+        ctx.fillStyle = `rgba(255,240,180,${sunAlpha})`; ctx.beginPath(); ctx.arc(sx, sy, 25, 0, Math.PI * 2); ctx.fill();
+        ctx.restore();
+      }
+
+      // Fog Layer (Dissipates)
+      const fogAlpha = Math.max(0, 0.4 - p * 0.6);
+      if (fogAlpha > 0) {
+        const hg = ctx.createLinearGradient(0, GY - H * 0.4, 0, GY);
+        hg.addColorStop(0, 'rgba(200,200,220,0)');
+        hg.addColorStop(1, `rgba(200,200,220,${fogAlpha})`);
+        ctx.fillStyle = hg;
+        ctx.fillRect(0, GY - H * 0.4, W, H * 0.4);
+
+        ctx.fillStyle = `rgba(200,200,220,${fogAlpha * 0.5})`;
+        for (let i = 0; i < 3; i++) {
+          const fx = ((f * 0.5 + i * 300) % (W * 2)) - W * 0.5;
+          ctx.beginPath();
+          ctx.ellipse(W - fx, GY - 20 + Math.sin(f * 0.02 + i) * 10, W * 0.4, 40, 0, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+    }
+
+    // ── PARALLAX TREES ───────────────────────────────
+    class TreeLayer {
+      constructor(density, spdMult, hRatio, yOffset, alphaFn) {
+        this.spd = spdMult; this.hRatio = hRatio; this.yBase = yOffset; this.alphaFn = alphaFn;
+        this.trees = [];
+        for (let i = 0; i < density; i++) this.trees.push(this._make(Math.random() * 2000)); // Large initial spread
+      }
+      _make(x) { return { x, w: Math.random() * 40 + 20, h: H * (Math.random() * this.hRatio + this.hRatio * 0.5), pine: Math.random() > .3 }; }
+      scroll(spd) {
+        this.trees.forEach(t => {
+          t.x -= this.spd * spd;
+          if (t.x + t.w < 0) Object.assign(t, this._make(W + Math.random() * 300));
+        });
+      }
+      draw(p, cp) {
+        const a = this.alphaFn(p);
+        const r = 8 + p * 30 | 0, g = 4 + p * 25 | 0, b = 4 + p * 15 | 0;
+        ctx.fillStyle = `rgba(${r},${g},${b},${a})`;
+        const gy = GY + this.yBase;
+        this.trees.forEach((t, i) => {
+          if (cp >= 4) { // Town Outskirts
+            ctx.fillRect(t.x, gy - t.h*0.3, 10, t.h*0.3);
+            ctx.fillRect(t.x - 20, gy - t.h*0.2, 50, 4);
+            if (t.pine) { ctx.fillRect(t.x+20, gy - t.h*0.6, t.w*1.5, t.h*0.6); } // buildings
+            return;
+          }
+          
+          // Environment-based density
+          if ((state.currentEnv === 'field' || state.currentEnv === 'river') && i % 3 !== 0) return;
+          if (state.currentEnv === 'road' && i % 2 !== 0) return;
+
+          if (state.currentEnv === 'river') { // Swamp/Marsh (Willows)
+             ctx.fillRect(t.x + t.w * .4, gy - t.h, t.w * .2, t.h * .5);
+             ctx.beginPath(); ctx.arc(t.x + t.w / 2, gy - t.h * .5, t.w * .7, 0, Math.PI * 2); ctx.fill();
+             ctx.fillRect(t.x, gy - t.h * .5, t.w, t.h * .4); // hanging moss
+          } else if (state.currentEnv === 'field') { // Open Plains (sparse)
+            if (!t.pine) {
+              ctx.beginPath(); ctx.arc(t.x + t.w / 2, gy - t.h * .2, t.w * .4, 0, Math.PI * 2); ctx.fill();
+            }
+          } else { // Deep Pine Forest or Road
+            if (t.pine) {
+              ctx.beginPath(); ctx.moveTo(t.x + t.w / 2, gy - t.h); ctx.lineTo(t.x + t.w, gy); ctx.lineTo(t.x, gy); ctx.fill();
+              ctx.beginPath(); ctx.moveTo(t.x + t.w / 2, gy - t.h * .6); ctx.lineTo(t.x + t.w * .9, gy - t.h * .2); ctx.lineTo(t.x + t.w * .1, gy - t.h * .2); ctx.fill();
+            } else {
+              ctx.fillRect(t.x + t.w * .4, gy - t.h, t.w * .2, t.h * .5);
+              ctx.beginPath(); ctx.arc(t.x + t.w / 2, gy - t.h * .6, t.w * .6, 0, Math.PI * 2); ctx.fill();
+            }
+          }
+        });
+      }
+    }
+    const TREES = [
+      new TreeLayer(8, 0.3, 0.25, 5, p => .4 + p * .2), // Back
+      new TreeLayer(12, 0.7, 0.2, 2, p => .6 + p * .2), // Mid
+      new TreeLayer(15, 1.3, 0.15, 0, p => .9),      // Front
+    ];
+
+    // drawGround logic moved to loop() to access groundScrollSpeed
+
+    // ── PLAYER (Animated) ───────────────────────────
+    const P = {
+      x: W * 0.2, y: 0, vy: 0, grounded: true, jumps: 2,
+      runTime: 0, dead: false, hasLantern: true,
+
+      jump() {
+        if (this.jumps > 0) {
+          this.vy = H * -0.018; // Scale jump to height
+          this.jumps--; this.grounded = false;
+          sfxJump();
+          spawnDust(this.x, GY, 10);
+          hide('tutorial');
+        }
+      },
+      update() {
+        if (this.dead) return;
+        this.x = W * 0.2; // Keep at fixed horizontal relative
+        const gravity = H * 0.001;
+        this.vy += gravity;
+        this.y += this.vy;
+
+        if (this.y >= GY) {
+          this.y = GY; this.vy = 0;
+          if (!this.grounded) {
+            this.grounded = true;
+            this.jumps = 2;
+            spawnDust(this.x, GY, 5);
+          }
+        }
+
+        if (this.grounded) {
+          // Fixed animation speed (decoupled from physics speed) — prevents leg flickering
+          // 1.8 units/frame = full 60-unit cycle in ~33 frames = ~0.55 seconds per stride
+          const prevStride = Math.floor(this.runTime / 30);
+          this.runTime += 1.8;
+          const curStride = Math.floor(this.runTime / 30);
+          if (curStride !== prevStride) sfxStep(curStride % 2 === 0);
+        }
+      },
+      draw(p) {
+        const h = H * 0.12; // Player height
+        const w = h * 0.3;
+        const x = this.x, y = this.y;
+
+        // Aura/Glow as freedom nears
+        if (p > 0.5) {
+          ctx.save();
+          ctx.globalAlpha = (p - 0.5) * 1.5;
+          const g = ctx.createRadialGradient(x, y - h / 2, 10, x, y - h / 2, h);
+          g.addColorStop(0, 'rgba(255,220,150,0.4)'); g.addColorStop(1, 'rgba(255,220,150,0)');
+          ctx.fillStyle = g; ctx.beginPath(); ctx.arc(x, y - h / 2, h, 0, Math.PI * 2); ctx.fill();
+          ctx.restore();
+        }
+
+        const fr = 15 + p * 40 | 0, fg = 10 + p * 20 | 0, fb = 10 + p * 15 | 0;
+        ctx.save();
+        ctx.fillStyle = ctx.strokeStyle = `rgb(${fr},${fg},${fb})`;
+        ctx.lineWidth = Math.max(3, h * 0.08); ctx.lineCap = 'round'; ctx.lineJoin = 'round';
+
+        // Animation angles
+        let leg1 = 0, leg2 = 0, arm1 = 0, arm2 = 0, bounce = 0;
+        if (this.grounded) {
+          // 60-unit cycle gives smooth ~0.55s stride at 1.8 units/frame
+          const cycle = (this.runTime % 60) / 60; // 0 to 1
+          leg1 = Math.sin(cycle * Math.PI * 2) * 1.1;
+          leg2 = Math.sin((cycle + 0.5) * Math.PI * 2) * 1.1;
+          arm1 = -leg1 * 0.7;
+          arm2 = -leg2 * 0.7;
+          bounce = Math.abs(Math.sin(cycle * Math.PI * 4)) * (h * 0.06);
+        } else {
+          leg1 = -0.5; leg2 = 0.8; arm1 = -1; arm2 = 1;
+        }
+
+        const cy = y - bounce; // Center Y
+
+        // Head
+        ctx.beginPath(); ctx.arc(x + (this.grounded ? 5 : 2), cy - h * 0.85, h * 0.15, 0, Math.PI * 2); ctx.fill();
+        // Torso (leaning forward)
+        ctx.beginPath(); ctx.moveTo(x, cy - h * 0.7); ctx.lineTo(x - w * 0.5, cy - h * 0.3); ctx.stroke();
+
+        // Back Arm
+        ctx.beginPath(); ctx.moveTo(x - 2, cy - h * 0.65);
+        ctx.lineTo(x - 2 + Math.cos(arm2 + 1.5) * w * 1.5, cy - h * 0.65 + Math.sin(arm2 + 1.5) * w * 1.5); ctx.stroke();
+
+        // Legs
+        const lLen = h * 0.4;
+        // Back leg
+        let kneeX = x - w * 0.5 + Math.sin(leg2) * lLen, kneeY = cy - h * 0.3 + Math.cos(leg2) * lLen;
+        ctx.beginPath(); ctx.moveTo(x - w * 0.5, cy - h * 0.3); ctx.lineTo(kneeX, kneeY);
+        ctx.lineTo(kneeX + Math.sin(leg2 + 0.5) * lLen * 0.8, kneeY + Math.cos(leg2 + 0.5) * lLen * 0.8); ctx.stroke();
+        // Front leg
+        kneeX = x - w * 0.5 + Math.sin(leg1) * lLen; kneeY = cy - h * 0.3 + Math.cos(leg1) * lLen;
+        ctx.beginPath(); ctx.moveTo(x - w * 0.5, cy - h * 0.3); ctx.lineTo(kneeX, kneeY);
+        ctx.lineTo(kneeX + Math.sin(leg1 + 0.5) * lLen * 0.8, kneeY + Math.cos(leg1 + 0.5) * lLen * 0.8); ctx.stroke();
+
+        // Front Arm (holding lantern)
+        const handX = x + Math.cos(arm1 + 1.5) * w * 1.5;
+        const handY = cy - h * 0.65 + Math.sin(arm1 + 1.5) * w * 1.5;
+        ctx.beginPath(); ctx.moveTo(x, cy - h * 0.65); ctx.lineTo(handX, handY); ctx.stroke();
+
+        // Cloth wrap blowing in wind
+        ctx.fillStyle = `rgba(${fr + 30},${fg + 20},${fb + 15},0.8)`;
+        ctx.beginPath();
+        ctx.moveTo(x - 4, cy - h * 0.6);
+        ctx.bezierCurveTo(x - w * 2.5, cy - h * 0.5, x - w * 3 + Math.sin(state.f * 0.2) * 5, cy - h * 0.2, x - w * 1.5, cy - h * 0.1);
+        ctx.bezierCurveTo(x - w, cy - h * 0.3, x - w * 0.5, cy - h * 0.4, x - 4, cy - h * 0.6);
+        ctx.fill();
+
+        // Lantern
+        if (this.hasLantern) {
+          const lx = handX + (this.grounded ? Math.sin(this.runTime * 0.2) * 3 : 0);
+          const ly = handY + 10;
+          ctx.fillStyle = '#b88840'; ctx.fillRect(lx - 3, ly - 2, 6, 8);
+          ctx.fillStyle = '#ffaa00'; ctx.fillRect(lx - 2, ly, 4, 4);
+          // Small glow
+          const lg = ctx.createRadialGradient(lx, ly, 2, lx, ly, 30);
+          lg.addColorStop(0, 'rgba(255,180,50,0.6)'); lg.addColorStop(1, 'rgba(255,150,0,0)');
+          ctx.fillStyle = lg; ctx.beginPath(); ctx.arc(lx, ly, 30, 0, Math.PI * 2); ctx.fill();
+        }
+
+        ctx.restore();
+      }
+    };
+
+    // ── PURSUER (Horseman Tension Mechanic) ─────────
+    const PURSUER = {
+      active: false,
+      distanceBehind: 1000, // pixels
+      draw(p) {
+        if (!this.active || this.distanceBehind > W * 0.8 || p > 0.8) return;
+
+        // Draw ominous red glow approaching from left
+        const intensity = Math.max(0, 1 - (this.distanceBehind / (W * 0.6)));
+        ctx.save();
+        const g = ctx.createLinearGradient(0, 0, W * 0.4, 0);
+        g.addColorStop(0, `rgba(150, 20, 10, ${intensity * 0.4})`);
+        g.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = g; ctx.fillRect(0, GY - H * 0.5, W * 0.4, H * 0.5);
+
+        // Draw silhouette
+        const x = -100 + (W * 0.4 - this.distanceBehind * 0.5);
+        if (x > -150) {
+          const y = GY - H * 0.15;
+          const bounce = Math.abs(Math.sin(state.f * 0.3)) * 5;
+          ctx.fillStyle = '#050205'; // very dark
+          // Very basic horse/rider shape
+          ctx.beginPath(); ctx.ellipse(x, y - bounce, 40, 25, 0, 0, Math.PI * 2); ctx.fill(); // body
+          ctx.beginPath(); ctx.ellipse(x + 30, y - 30 - bounce, 15, 20, 0.5, 0, Math.PI * 2); ctx.fill(); // head
+          ctx.fillRect(x - 10, y - 50 - bounce, 15, 40); // rider torso
+          ctx.beginPath(); ctx.arc(x - 2, y - 55 - bounce, 10, 0, Math.PI * 2); ctx.fill(); // rider head
+        }
+        ctx.restore();
+      }
+    };
+
+    // ── OBSTACLES & POWERUPS ─────────────────────────
+    const OBS = [];
+    const PUPS = []; // Powerups (Speed Lantern)
+    let nextObsX = 0;
+    const OBS_TYPES = ['stump', 'rock', 'fence', 'log'];
+
+    function spawnObs(forceX) {
+      if (state.safeZone > 0) return;
+
+      const type = state.currentObsType || OBS_TYPES[Math.floor(Math.random() * OBS_TYPES.length)];
+      let w, h, hitBox;
+      const scale = H / 430; // Scale relative to original design size
+
+      if (type === 'patrols') { w = 40 * scale; h = 70 * scale; hitBox = { x: 5, y: 10, w: 30, h: 60 }; }
+      else if (type === 'dogs') { w = 60 * scale; h = 35 * scale; hitBox = { x: 5, y: 10, w: 50, h: 25 }; }
+      else if (type === 'stump') { w = 25 * scale; h = 40 * scale; hitBox = { x: 5, y: 10, w: 15, h: 30 }; }
+      else if (type === 'rock') { w = 50 * scale; h = 30 * scale; hitBox = { x: 10, y: 10, w: 30, h: 20 }; }
+      else if (type === 'fence') { w = 20 * scale; h = 55 * scale; hitBox = { x: 0, y: 0, w: 20, h: 55 }; }
+      else { w = 60 * scale; h = 20 * scale; hitBox = { x: 5, y: 5, w: 50, h: 15 }; }
+
+      const x = forceX || (W + Math.random() * 200);
+      OBS.push({ type, x, y: GY - h, w, h, hb: hitBox });
+
+      // Occasional double obstacles at higher speeds
+      if (state.spd > 6 && Math.random() > 0.7 && !forceX) {
+        nextObsX = x + w + (Math.random() * 100 + 150) * scale;
+        setTimeout(() => spawnObs(nextObsX), 10);
+      } else if (Math.random() > 0.85 && !forceX) {
+        // Spawn powerup lantern slightly after and above obstacle
+        PUPS.push({ x: x + w + 150 * scale, y: GY - H * 0.25, w: 15 * scale, h: 25 * scale, collected: false });
+      }
+    }
+
+    function drawObs(o, p) {
+      const r = 20 + p * 30 | 0, g = 10 + p * 20 | 0, b = 5 + p * 10 | 0;
+      const { x, y, w, h } = o;
+
+      // Warning Firefly (Helps visibility in dark)
+      const fy = y - 15 + Math.sin(state.f * 0.2 + x) * 5;
+      ctx.fillStyle = `rgba(200, 255, 100, ${0.5 + Math.sin(state.f * 0.1 + x) * 0.5})`;
+      ctx.beginPath(); ctx.arc(x + w * 0.5, fy, 2, 0, Math.PI * 2); ctx.fill();
+      ctx.fillStyle = `rgba(200, 255, 100, 0.15)`;
+      ctx.beginPath(); ctx.arc(x + w * 0.5, fy, 15, 0, Math.PI * 2); ctx.fill();
+
+      // Body
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.strokeStyle = `rgb(${r - 5},${g - 4},${b - 2})`; ctx.lineWidth = 2;
+
+      if (o.type === 'patrols') {
+        // Draw Horse/Patrol Silhouette
+        ctx.fillStyle = '#050205'; ctx.strokeStyle = 'none';
+        const bounce = Math.abs(Math.sin(state.f * 0.2 + x)) * 3;
+        ctx.beginPath(); ctx.ellipse(x + w/2, y + h*0.6 - bounce, w/2, h*0.3, 0, 0, Math.PI*2); ctx.fill(); // horse body
+        ctx.beginPath(); ctx.ellipse(x + w*0.8, y + h*0.3 - bounce, w*0.2, h*0.3, 0.5, 0, Math.PI*2); ctx.fill(); // horse head
+        ctx.fillRect(x + w*0.2, y - bounce, w*0.2, h*0.5); // rider torso
+        ctx.beginPath(); ctx.arc(x + w*0.3, y - 5 - bounce, w*0.15, 0, Math.PI*2); ctx.fill(); // rider head
+        
+        // Patrol lantern
+        ctx.fillStyle = 'rgba(255, 50, 0, 0.6)';
+        ctx.beginPath(); ctx.arc(x - 5, y + 10 - bounce, 10 + Math.sin(state.f*0.3)*2, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#ffcc00'; ctx.fillRect(x - 7, y + 8 - bounce, 4, 4);
+
+      } else if (o.type === 'dogs') {
+        // Draw Dog Silhouette running
+        ctx.fillStyle = '#0a050a'; ctx.strokeStyle = 'none';
+        const legBounce = Math.sin(state.f * 0.4 + x) * 5;
+        ctx.beginPath(); ctx.ellipse(x + w/2, y + h*0.6, w*0.4, h*0.3, 0, 0, Math.PI*2); ctx.fill(); // body
+        ctx.beginPath(); ctx.arc(x + w*0.8, y + h*0.4, h*0.3, 0, Math.PI*2); ctx.fill(); // head
+        ctx.fillRect(x + w*0.2 - legBounce, y + h*0.6, 5, h*0.4); // back leg
+        ctx.fillRect(x + w*0.7 + legBounce, y + h*0.6, 5, h*0.4); // front leg
+        // Red glowing eyes
+        ctx.fillStyle = 'red'; ctx.fillRect(x + w*0.9, y + h*0.3, 2, 2);
+
+      } else if (o.type === 'stump') {
+        ctx.fillRect(x + w * 0.2, y, w * 0.6, h);
+        ctx.fillRect(x, y + h * 0.2, w, h * 0.3);
+        ctx.beginPath(); ctx.moveTo(x + w * 0.2, y + h); ctx.lineTo(x - w * 0.3, y + h + 10); ctx.stroke();
+        ctx.beginPath(); ctx.moveTo(x + w * 0.6, y + h); ctx.lineTo(x + w * 1.2, y + h + 10); ctx.stroke();
+      } else if (o.type === 'rock') {
+        ctx.beginPath();
+        ctx.moveTo(x + w * .15, y + h); ctx.lineTo(x, y + h * .6);
+        ctx.lineTo(x + w * .3, y); ctx.lineTo(x + w * .7, y);
+        ctx.lineTo(x + w, y + h * .5); ctx.lineTo(x + w * .8, y + h); ctx.closePath();
+        ctx.fill(); ctx.stroke();
+      } else if (o.type === 'fence') {
+        [0, 0.4, 0.8].forEach(dx => { ctx.fillRect(x + w * dx, y, w * 0.2, h); });
+        ctx.fillRect(x - w * 0.1, y + h * 0.2, w * 1.2, h * 0.15);
+        ctx.fillRect(x - w * 0.1, y + h * 0.6, w * 1.2, h * 0.15);
+      } else { // log
+        ctx.fillRect(x, y + h * 0.2, w, h * 0.8);
+        ctx.fillStyle = `rgb(${r + 10},${g + 5},${b + 2})`;
+        ctx.fillRect(x, y, w, h * 0.3);
+      }
+      
+      // Moonlight highlight on top edges to pop against background
+      ctx.fillStyle = `rgba(255, 230, 180, 0.2)`;
+      ctx.fillRect(x, y, w, Math.max(2, h * 0.1));
+    }
+
+    function drawPups(f) {
+      PUPS.forEach(pu => {
+        if (pu.collected) return;
+        const glow = 0.7 + Math.sin(f * 0.2) * 0.3;
+        const yOffset = Math.sin(f * 0.1) * 5;
+        const py = pu.y + yOffset;
+        ctx.save();
+        ctx.globalAlpha = glow;
+        const g = ctx.createRadialGradient(pu.x, py, 2, pu.x, py, pu.w * 3);
+        g.addColorStop(0, 'rgba(100,255,255,0.8)');
+        g.addColorStop(1, 'rgba(50,150,255,0)');
+        ctx.fillStyle = g;
+        ctx.beginPath(); ctx.arc(pu.x, py, pu.w * 3, 0, Math.PI * 2); ctx.fill();
+
+        ctx.fillStyle = '#ccffff';
+        ctx.fillRect(pu.x - pu.w / 2, py - pu.h / 2, pu.w, pu.h);
+        ctx.restore();
+      });
+    }
+
+    function hitTestRect(x1, y1, w1, h1, x2, y2, w2, h2) {
+      return x1 < x2 + w2 && x1 + w1 > x2 && y1 < y2 + h2 && y1 + h1 > y2;
+    }
+
+    function hitTestObs(o) {
+      const ph = H * 0.12, pw = ph * 0.3;
+      const px = P.x - pw / 2, py = P.y - ph; // Player AABB approx
+      const ox = o.x + o.hb.x, oy = o.y + o.hb.y;
+      const forgiveness = 4;
+      return hitTestRect(px + forgiveness, py + forgiveness, pw - forgiveness * 2, ph - forgiveness, ox, oy, o.hb.w, o.hb.h);
+    }
+
+    // ── LANTERNS (Checkpoints) ──────────────────────
+    const LANTS = [];
+    function spawnLantern() { LANTS.push({ x: W + 100, reached: false }); }
+
+    function drawLantern(lx, f) {
+      const glow = 0.7 + Math.sin(f * 0.1) * 0.3;
+      const scale = H / 430;
+      const y = GY - 80 * scale;
+
+      ctx.fillStyle = '#332211'; ctx.fillRect(lx - 2, y, 4, 30 * scale); // pole
+
+      // Halo
+      ctx.save(); ctx.globalAlpha = glow;
+      const g = ctx.createRadialGradient(lx, y, 5, lx, y, 60 * scale);
+      g.addColorStop(0, 'rgba(255,200,50,0.6)'); g.addColorStop(1, 'rgba(255,150,0,0)');
+      ctx.fillStyle = g; ctx.beginPath(); ctx.arc(lx, y, 60 * scale, 0, Math.PI * 2); ctx.fill();
+
+      // Lantern body
+      ctx.fillStyle = '#ffcc55'; ctx.fillRect(lx - 8 * scale, y - 10 * scale, 16 * scale, 20 * scale);
+      ctx.fillStyle = '#fff'; ctx.fillRect(lx - 5 * scale, y - 6 * scale, 10 * scale, 12 * scale);
+      ctx.restore();
+
+      // Beam upwards
+      ctx.fillStyle = `rgba(255,220,100,${glow * 0.2})`;
+      ctx.beginPath(); ctx.moveTo(lx, y - 10 * scale); ctx.lineTo(lx - 20 * scale, y - 200 * scale); ctx.lineTo(lx + 20 * scale, y - 200 * scale); ctx.fill();
+    }
+
+    // ── PARTICLES ────────────────────────────────────
+    const PARTS = [];
+    function spawnDust(x, y, n) {
+      let colBase = '150,100,50'; // dirt
+      if (state.currentEnv === 'river') colBase = '150,220,255'; // splash
+      else if (state.currentEnv === 'field') colBase = '100,200,100'; // leaves
+      else if (state.currentEnv === 'road') colBase = '180,160,140'; // lighter road dust
+      
+      for (let i = 0; i < n; i++) PARTS.push({
+        x, y, vx: (Math.random() - .5) * 2, vy: -Math.random() * 1.5,
+        life: 1, decay: 0.04, col: `rgba(${colBase},`, s: Math.random() * 3 + 1
+      });
+    }
+    function spawnBurst(x, y, n, colRGB) {
+      for (let i = 0; i < n; i++) {
+        const a = (i / n) * Math.PI * 2, spd = Math.random() * 6 + 2;
+        PARTS.push({
+          x, y, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd - 2,
+          life: 1, decay: 0.02, col: `rgba(${colRGB},`, s: Math.random() * 4 + 2
+        });
+      }
+    }
+    function spawnFireflies(n) {
+      for (let i = 0; i < n; i++) PARTS.push({
+        x: Math.random() * W, y: Math.random() * (GY - 50) + 20,
+        vx: (Math.random() - .5) * 0.5, vy: (Math.random() - .5) * 0.3,
+        life: 1, decay: 0, col: 'rgba(200,255,100,', s: Math.random() * 2 + 1.5,
+        firefly: true, age: Math.random() * 100
+      });
+    }
+
+    function drawParts(p) {
+      for (let i = PARTS.length - 1; i >= 0; i--) {
+        const pt = PARTS[i];
+        pt.x += pt.vx; pt.y += pt.vy;
+        if (pt.firefly) {
+          if (p > 0.4) { PARTS.splice(i, 1); continue; } // Fade out at dawn
+          pt.vx += (Math.random() - .5) * 0.1; pt.vy += (Math.random() - .5) * 0.1;
+          pt.vx *= 0.95; pt.vy *= 0.95;
+          pt.age += 0.05;
+          ctx.fillStyle = `${pt.col}${Math.abs(Math.sin(pt.age))})`;
+        } else {
+          pt.vy += 0.1; pt.life -= pt.decay;
+          if (pt.life <= 0) { PARTS.splice(i, 1); continue; }
+          ctx.fillStyle = `${pt.col}${pt.life})`;
+        }
+        ctx.beginPath(); ctx.arc(pt.x, pt.y, pt.s, 0, Math.PI * 2); ctx.fill();
+      }
+    }
+
+    // ── GAME STATE & LOOP ────────────────────────────
+    const state = {
+      mode: 'start', dist: 0, spd: 0, f: 0, totalDist: 10000,
+      cpReached: 0, safeZone: 0, startMs: 0, deaths: 0, boostTimer: 0,
+      currentEnv: 'forest', currentObsType: 'fallen_trees'
+    };
+
+    function loop() {
+      requestAnimationFrame(loop);
+      state.f++;
+      const p = Math.min(1, state.dist / state.totalDist);
+
+      // Cinematic Pan Zoom Effect at Start
+      let camScale = 1;
+      if (state.mode === 'playing' && state.startMs) {
+        const t = Date.now() - state.startMs;
+        if (t < 1500) camScale = 1.3 - (t / 1500) * 0.3; // zooms out from 1.3 to 1.0
+      }
+
+      ctx.save();
+      if (camScale !== 1) {
+        ctx.translate(P.x, GY);
+        ctx.scale(camScale, camScale);
+        ctx.translate(-P.x, -GY);
+      }
+
+      // Background is always drawn
+      if (state.mode === 'start') {
+        // Draw giant cinematic moon for start screen
+        ctx.save();
+        const mg = ctx.createRadialGradient(W*0.5, H*0.3, 10, W*0.5, H*0.3, W*0.4);
+        mg.addColorStop(0, 'rgba(255,250,230,0.8)'); mg.addColorStop(0.3, 'rgba(255,200,100,0.2)'); mg.addColorStop(1, 'rgba(0,0,0,0)');
+        ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(W*0.5, H*0.3, W*0.4, 0, Math.PI*2); ctx.fill();
+        ctx.fillStyle = '#fff9e6'; ctx.beginPath(); ctx.arc(W*0.5, H*0.3, H*0.15, 0, Math.PI*2); ctx.fill();
+        ctx.restore();
+        
+        // Slow pan effect
+        TREES.forEach(l => l.scroll(0.5));
+      }
+      
+      drawSky(p, state.f);
+      TREES.forEach(l => l.draw(p, state.cpReached));
+      
+      // ── GROUND ───────────────────────────────────────
+      let r = 15 + p * 60 | 0, g = 8 + p * 45 | 0, b = 5 + p * 20 | 0;
+      
+      const groundScrollSpeed = state.mode === 'start' ? 1.5 : state.spd;
+      const bladeOffset = (state.f * groundScrollSpeed) % 40;
+
+      if (state.currentEnv === 'river') {
+        // Deep blue water
+        ctx.fillStyle = `rgb(${r - 5},${g + 10},${b + 30})`; 
+        ctx.fillRect(0, GY, W, H - GY);
+        // Water ripples
+        ctx.strokeStyle = `rgba(150, 200, 255, 0.4)`;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        for (let i = -40; i < W; i += 60) {
+          let rx = i - (bladeOffset * 0.5) + (Math.sin(state.f * 0.05 + i) * 10);
+          ctx.moveTo(rx, GY + 20 + Math.sin(rx * 0.05) * 5);
+          ctx.lineTo(rx + 40, GY + 20 + Math.sin((rx + 40) * 0.05) * 5);
+          ctx.moveTo(rx + 20, GY + 40 + Math.cos(rx * 0.05) * 5);
+          ctx.lineTo(rx + 60, GY + 40 + Math.cos((rx + 60) * 0.05) * 5);
+        }
+        ctx.stroke();
+      } 
+      else if (state.currentEnv === 'field') {
+        // Golden/green field
+        ctx.fillStyle = `rgb(${r + 20},${g + 30},${b - 5})`; 
+        ctx.fillRect(0, GY, W, H - GY);
+        ctx.fillStyle = `rgb(${r + 30},${g + 45},${b + 5})`;
+        ctx.fillRect(0, GY, W, 6);
+        
+        // Dense swaying grass
+        ctx.fillStyle = `rgb(${r + 15},${g + 40},${b})`;
+        for (let i = -40; i < W; i += 20) {
+          const bx = i - (bladeOffset % 20);
+          const sway = Math.sin(state.f * 0.1 + i) * 10;
+          ctx.beginPath();
+          ctx.moveTo(bx, GY); ctx.lineTo(bx + sway + 5, GY - 25); ctx.lineTo(bx + 10, GY); ctx.fill();
+          ctx.beginPath();
+          ctx.moveTo(bx + 8, GY); ctx.lineTo(bx + sway + 12, GY - 15); ctx.lineTo(bx + 16, GY); ctx.fill();
+        }
+      } 
+      else if (state.currentEnv === 'road') {
+        // Dusty wagon road
+        ctx.fillStyle = `rgb(${r + 15},${g + 15},${b + 15})`; 
+        ctx.fillRect(0, GY, W, H - GY);
+        // Wagon ruts
+        ctx.fillStyle = `rgba(0,0,0,0.4)`;
+        const rutOffset = (state.f * groundScrollSpeed) % 150;
+        for (let i = -150; i < W; i += 150) {
+          ctx.fillRect(i - rutOffset, GY + 15, 100, 4);
+          ctx.fillRect(i - rutOffset + 50, GY + 35, 100, 4);
+        }
+      } 
+      else {
+        // Standard forest / default
+        ctx.fillStyle = `rgb(${r},${g},${b})`; 
+        ctx.fillRect(0, GY, W, H - GY);
+        ctx.fillStyle = `rgb(${r + 10},${g + 15},${b + 5})`;
+        ctx.fillRect(0, GY, W, 6);
+        ctx.fillStyle = `rgba(0,0,0,0.3)`;
+        for (let i = -40; i < W; i += 40) {
+          const bx = i - bladeOffset;
+          ctx.beginPath();
+          ctx.moveTo(bx, GY); ctx.lineTo(bx + 5, GY - 15); ctx.lineTo(bx + 10, GY); ctx.fill();
+        }
+      }
+
+      ctx.fillStyle = `rgba(0,0,0,0.2)`;
+      const offset = (state.f * groundScrollSpeed) % 100;
+      for (let i = -100; i < W; i += 100) {
+        ctx.fillRect(i - offset, GY + 10, 40, 2);
+        ctx.fillRect(i - offset + 30, GY + 25, 20, 2);
+      }
+
+      if (state.mode === 'start' || state.mode === 'victory') {
+        // Draw dramatic foreground silhouettes
+        ctx.fillStyle = '#050205';
+        ctx.fillRect(0, H - 40, W, 40);
+        for (let i = -100; i < W + 100; i += 150) {
+          const shift = (state.f * 2 + i) % (W + 200) - 100;
+          ctx.beginPath(); ctx.ellipse(shift + 50, H - 30, 80, 150, 0, 0, Math.PI * 2); ctx.fill();
+        }
+        drawParts(p);
+        ctx.restore();
+        return;
+      }
+
+      if (state.mode === 'paused' || state.mode === 'gameover' || state.mode === 'paused_menu') {
+        OBS.forEach(o => drawObs(o, p));
+        drawPups(state.f);
+        LANTS.forEach(l => drawLantern(l.x, state.f));
+        P.draw(p);
+        drawParts(p);
+        ctx.restore();
+        return;
+      }
+
+      // ── UPDATE ──
+      state.dist += state.spd;
+
+      // Dynamic speed curve - slower and more deliberate
+      let targetSpd = (W * 0.004) + (p * W * 0.0035);
+      
+      // Narrative Environment Modifiers
+      let pursuerSpd = 0.5 + (p * 1.5);
+      if (state.currentEnv === 'river') {
+        targetSpd *= 0.7; // Hard to run in water
+        pursuerSpd *= 0.5; // Also hard for horses
+      } else if (state.currentEnv === 'road') {
+        targetSpd *= 1.2; // Fast flat ground
+        pursuerSpd *= 2.0; // Horses are extremely fast on roads
+      } else if (state.currentEnv === 'field') {
+        targetSpd *= 1.0; 
+      }
+
+      if (state.boostTimer > 0) {
+        state.boostTimer--;
+        targetSpd *= 1.3; // Speed boost multiplier
+        if (state.f % 3 === 0 && state.currentEnv !== 'river') spawnDust(P.x, GY, 1); // Trail effect
+      }
+      state.spd = state.spd * 0.95 + targetSpd * 0.05;
+
+      if (state.safeZone > 0) state.safeZone -= state.spd;
+
+      // Pursuer Logic
+      if (state.cpReached < 5) {
+        PURSUER.active = true;
+        PURSUER.distanceBehind -= pursuerSpd;
+        if (!P.grounded) PURSUER.distanceBehind += (state.currentEnv === 'river' ? 1 : 2); // Jumping helps escape
+        if (state.boostTimer > 0) PURSUER.distanceBehind += 4; // Boost helps a lot
+
+        if (state.hbGainNode) {
+          const tension = Math.max(0, 1 - (PURSUER.distanceBehind / 800));
+          state.hbGainNode.gain.value = tension * 0.3;
+          heartbeatOsc.frequency.value = 50 + tension * 40;
+        }
+
+        const wi = document.getElementById('warningIndicator');
+        if (PURSUER.distanceBehind < 400) wi.style.opacity = Math.abs(Math.sin(state.f * 0.1));
+        else wi.style.opacity = 0;
+
+        if (PURSUER.distanceBehind <= 0) {
+          P.dead = true;
+          showGameOver("Caught by patrols. They turned you back.");
+        }
+      } else {
+        PURSUER.active = false;
+        if (state.hbGainNode) state.hbGainNode.gain.value = 0;
+        document.getElementById('warningIndicator').style.opacity = 0;
+      }
+
+      // Trees & Obstacles
+      TREES.forEach(l => l.scroll(state.spd));
+
+      nextObsX -= state.spd;
+      if (nextObsX <= 0 && state.safeZone <= 0) {
+        spawnObs();
+        // Spacing gets tighter as game progresses, but scales with screen width
+        nextObsX = W * 0.4 + Math.random() * W * 0.6 - (p * W * 0.2);
+      }
+
+      // Obstacle Collision
+      for (let i = OBS.length - 1; i >= 0; i--) {
+        OBS[i].x -= state.spd;
+        if (OBS[i].x + OBS[i].w < -50) OBS.splice(i, 1);
+        else if (!P.dead && hitTestObs(OBS[i])) {
+          P.dead = true;
+          showGameOver("You tripped in the dark.");
+        }
+      }
+
+      // Powerups Collision
+      for (let i = PUPS.length - 1; i >= 0; i--) {
+        PUPS[i].x -= state.spd;
+        if (PUPS[i].x < -50) PUPS.splice(i, 1);
+        else if (!PUPS[i].collected && hitTestRect(P.x - H * 0.03, P.y - H * 0.12, H * 0.06, H * 0.12, PUPS[i].x - PUPS[i].w / 2, PUPS[i].y - PUPS[i].h / 2, PUPS[i].w, PUPS[i].h)) {
+          PUPS[i].collected = true;
+          state.boostTimer = 120; // 2 seconds at 60fps
+          sfxPower();
+          spawnBurst(PUPS[i].x, PUPS[i].y, 20, '100,255,255');
+        }
+      }
+
+      // Checkpoints
+      const cpInterval = state.totalDist / 5;
+      if (state.dist >= (state.cpReached + 1) * cpInterval - W && LANTS.length === 0 && state.cpReached < 5) {
+        spawnLantern();
+        state.safeZone = W * 2; // Clear obstacles around lantern
+      }
+
+      for (let i = LANTS.length - 1; i >= 0; i--) {
+        LANTS[i].x -= state.spd;
+        if (!LANTS[i].reached && LANTS[i].x < P.x) {
+          LANTS[i].reached = true;
+          triggerCheckpoint(state.cpReached++);
+          LANTS.splice(i, 1);
+        }
+      }
+
+      // Ticker Fact Rotation
+      if (state.f % 600 === 0) {
+        const txt = document.getElementById('tickerText');
+        txt.textContent = TICKER_FACTS[Math.floor(Math.random() * TICKER_FACTS.length)];
+      }
+
+      // Mid-run whisper narration — fetch in background, display on canvas
+      if (GEMINI_API_KEY && state.f % 900 === 0 && state.f > 300) { // every ~15s
+        fetchGeminiWhisper();
+      }
+      if (whisperTimer > 0) {
+        whisperTimer--;
+      } else if (whisperQueue.length > 0) {
+        currentWhisper = whisperQueue.shift();
+        whisperTimer = WHISPER_DISPLAY_FRAMES;
+      } else {
+        currentWhisper = null;
+      }
+
+      if (state.f % 30 === 0 && PARTS.length < 30) spawnFireflies(2);
+
+      P.update();
+      if (state.dist >= state.totalDist && !P.dead && state.mode === 'playing') showVictory();
+
+      // ── DRAW ──
+      OBS.forEach(o => drawObs(o, p));
+      drawPups(state.f);
+      LANTS.forEach(l => drawLantern(l.x, state.f));
+      PURSUER.draw(p);
+      P.draw(p);
+      drawParts(p);
+
+      // ── DYNAMIC WEATHER ──
+      if (state.currentWeather === 'rain' || state.currentWeather === 'storm') {
+        ctx.strokeStyle = 'rgba(200, 220, 255, 0.4)';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for(let i=0; i<100; i++) {
+          let rx = (Math.random() * W + (state.f * 5)) % W;
+          let ry = (Math.random() * H + (state.f * 15)) % H;
+          ctx.moveTo(rx, ry);
+          ctx.lineTo(rx - 5, ry + 15);
+        }
+        ctx.stroke();
+      }
+      if (state.currentWeather === 'storm' && Math.random() < 0.02) {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.3)';
+        ctx.fillRect(0, 0, W, H);
+      }
+      if (state.currentWeather === 'fog') {
+        ctx.fillStyle = `rgba(200, 210, 220, ${0.15 + Math.sin(state.f * 0.01) * 0.05})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+
+      // Speed lines
+      if (state.spd > W * 0.01) {
+        ctx.strokeStyle = `rgba(255,200,100,0.1)`; ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+          const ly = Math.random() * (GY - 50) + 20, lw = Math.random() * W * 0.2;
+          ctx.beginPath(); ctx.moveTo(0, ly); ctx.lineTo(lw, ly); ctx.stroke();
+        }
+      }
+
+      // Draw mid-run Gemini whisper narration
+      if (currentWhisper && whisperTimer > 0) {
+        const fadeFrames = 30;
+        let alpha = 1;
+        if (whisperTimer < fadeFrames) alpha = whisperTimer / fadeFrames;
+        else if (whisperTimer > WHISPER_DISPLAY_FRAMES - fadeFrames) alpha = (WHISPER_DISPLAY_FRAMES - whisperTimer) / fadeFrames;
+        alpha = Math.max(0, Math.min(1, alpha));
+
+        const ww = Math.min(W * 0.7, 600);
+        const wx = W / 2;
+        const wy = GY * 0.45;
+
+        ctx.save();
+        ctx.globalAlpha = alpha * 0.92;
+        // Dark background pill
+        ctx.fillStyle = 'rgba(5, 2, 15, 0.75)';
+        const lines = wrapText(ctx, currentWhisper, ww - 40);
+        const lineH = 22;
+        const totalH = lines.length * lineH + 30;
+        ctx.beginPath();
+        ctx.roundRect(wx - ww / 2, wy - totalH / 2, ww, totalH, 12);
+        ctx.fill();
+        // Gold border
+        ctx.strokeStyle = 'rgba(255,200,80,0.5)';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        // Gemini badge
+        ctx.font = `bold 10px sans-serif`;
+        ctx.fillStyle = 'rgba(255,200,80,0.6)';
+        ctx.textAlign = 'center';
+        ctx.fillText('✦ GEMINI WHISPER', wx, wy - totalH / 2 + 12);
+        // Text
+        ctx.font = `italic ${Math.min(16, H * 0.022)}px 'Crimson Text', serif`;
+        ctx.fillStyle = '#e8d5a8';
+        lines.forEach((line, i) => {
+          ctx.fillText(line, wx, wy - totalH / 2 + 28 + i * lineH);
+        });
+        ctx.restore();
+      }
+
+      ctx.restore(); // Restore camera pan
+      setHUD(p);
+    }
+
+    // ── UI HELPERS ───────────────────────────────────
+    function show(id) { document.getElementById(id).classList.remove('hidden'); }
+    function hide(id) { document.getElementById(id).classList.add('hidden'); }
+    function hideAll() { ['startScreen', 'cpScreen', 'victoryScreen', 'goScreen', 'hud', 'progWrap', 'tickerWrap', 'touchZone'].forEach(hide); }
+
+    // Text wrap helper for whisper narration box
+    function wrapText(ctx, text, maxWidth) {
+      const words = text.split(' ');
+      const lines = [];
+      let line = '';
+      for (const word of words) {
+        const test = line ? line + ' ' + word : word;
+        if (ctx.measureText(test).width > maxWidth && line) {
+          lines.push(line); line = word;
+        } else { line = test; }
+      }
+      if (line) lines.push(line);
+      return lines;
+    }
+
+    function setHUD(p) {
+      document.getElementById('distVal').textContent = (state.dist / 1000).toFixed(1) + ' mi';
+      document.getElementById('freeVal').textContent = Math.max(0, (state.totalDist - state.dist) / 1000).toFixed(1) + ' mi';
+      document.getElementById('progFill').style.width = Math.min(100, p * 100) + '%';
+    }
+
+    function typeWriter(elementId, text, speed, callback) {
+      const el = document.getElementById(elementId);
+      el.innerHTML = '';
+      let i = 0;
+      function type() {
+        if (i < text.length) {
+          el.innerHTML += text.charAt(i);
+          i++;
+          setTimeout(type, speed);
+        } else if (callback) callback();
+      }
+      type();
+    }
+
+    async function triggerCheckpoint(idx) {
+      state.mode = 'paused';
+      if (state.hbGainNode) state.hbGainNode.gain.value = 0; // stop heartbeat
+      PURSUER.distanceBehind = 1000; // Reset pursuer
+
+      sfxCp();
+      spawnBurst(P.x, P.y - 30, 40, '255,200,100');
+      document.getElementById(`d${idx}`).classList.add('lit');
+
+      hideAll();
+      show('hud'); show('progWrap'); show('cpScreen');
+
+      const cd = CDATA[idx];
+      document.getElementById('cpTag').textContent = cd.tag;
+      document.getElementById('cpYear').textContent = cd.year;
+      document.getElementById('cpHead').textContent = cd.head;
+      document.getElementById('cpBody').innerHTML = '<span class="pulsing">Consulting history via Gemini AI...</span>';
+      document.getElementById('cpBadge').style.display = GEMINI_API_KEY ? 'block' : 'none';
+      document.getElementById('continueBtn').style.display = 'none';
+      document.getElementById('choiceContainer').style.display = 'none';
+
+      // Use prefetched or fetch now, fallback to local data
+      let storyData = preloadedStories[idx];
+      if (!storyData && GEMINI_API_KEY) storyData = await fetchGemini(idx);
+      
+      let textToType = "";
+      if (storyData && storyData.dilemma) {
+         textToType = (storyData.story || "") + "\n\n" + storyData.dilemma;
+         state.pendingChoices = storyData;
+      } else {
+         textToType = cd.story + "\n\n" + cd.dilemma;
+         state.pendingChoices = cd;
+      }
+
+      typeWriter('cpBody', textToType, 15, () => {
+         if (state.pendingChoices) {
+           document.getElementById('btnChoiceA').textContent = state.pendingChoices.optA;
+           document.getElementById('btnChoiceB').textContent = state.pendingChoices.optB;
+           document.getElementById('choiceContainer').style.display = 'flex';
+         } else {
+           document.getElementById('continueBtn').style.display = 'inline-block';
+           document.getElementById('continueBtn').style.opacity = '1';
+         }
+      });
+    }
+
+    function makeChoice(choice) {
+      if (state.pendingChoices) {
+        if (choice === 'A') {
+          state.currentEnv = state.pendingChoices.envA || 'forest';
+          state.currentObsType = state.pendingChoices.obsA || 'fallen_trees';
+          state.currentWeather = state.pendingChoices.weatherA || 'clear';
+          state.playerHistory.push(state.pendingChoices.optA);
+        } else {
+          state.currentEnv = state.pendingChoices.envB || 'forest';
+          state.currentObsType = state.pendingChoices.obsB || 'fallen_trees';
+          state.currentWeather = state.pendingChoices.weatherB || 'clear';
+          state.playerHistory.push(state.pendingChoices.optB);
+        }
+      }
+      resumeGame();
+    }
+
+    function resumeGame() {
+      hideAll();
+      show('hud'); show('progWrap'); show('tickerWrap');
+      if (window.innerWidth <= 768) show('touchZone');
+      state.mode = 'playing';
+    }
+
+    function togglePause() {
+      if (state.mode === 'playing') {
+        state.mode = 'paused_menu';
+        hideAll();
+        show('pauseScreen');
+      } else if (state.mode === 'paused_menu') {
+        resumeGame();
+      }
+    }
+
+    function quitToMenu() {
+      state.mode = 'start';
+      hideAll();
+      show('startScreen');
+    }
+
+    function shareScore() {
+      const stars = document.getElementById('vStars').textContent;
+      const sec = ((Date.now() - state.startMs) / 1000).toFixed(1);
+      const text = `I escaped to freedom in Free At Dawn!\nTime: ${sec}s\nRating: ${stars}\nPlay the historical runner powered by Gemini AI: https://dev.to/challenges/june-game-jam-2026-06-03`;
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Score copied to clipboard! You can paste it into a DEV comment.");
+      }).catch(() => {
+        prompt("Copy this text to share:", text);
+      });
+    }
+
+    function showVictory() {
+      state.mode = 'victory';
+      if (state.hbGainNode) state.hbGainNode.gain.value = 0;
+      sfxWin();
+      hideAll();
+      show('victoryScreen');
+
+      const sec = ((Date.now() - state.startMs) / 1000).toFixed(1);
+      document.getElementById('vStats').textContent = `Journey complete in ${sec} seconds`;
+
+      // Star rating calculation
+      let stars = "★★★";
+      if (state.deaths > 0) stars = "★★☆";
+      if (state.deaths > 3) stars = "★☆☆";
+      document.getElementById('vStars').textContent = stars;
+
+      // Best time logic
+      let best = localStorage.getItem('fad_best');
+      if (!best || parseFloat(sec) < parseFloat(best)) {
+        localStorage.setItem('fad_best', sec);
+        best = sec;
+        document.getElementById('vBest').textContent = "NEW BEST TIME!";
+      } else {
+        document.getElementById('vBest').textContent = `Best Time: ${best}s`;
+      }
+
+      // Fireworks
+      let count = 0;
+      const fw = setInterval(() => {
+        spawnBurst(Math.random() * W, Math.random() * H * 0.5, 30, '255,150,50');
+        sfxJump(); // pop sound
+        if (++count > 15) clearInterval(fw);
+      }, 200);
+    }
+
+    function showGameOver(reason) {
+      state.mode = 'gameover';
+      state.deaths++;
+      if (state.hbGainNode) state.hbGainNode.gain.value = 0;
+      sfxDie();
+      spawnBurst(P.x, P.y - 20, 40, '255,50,50');
+
+      setTimeout(() => {
+        hideAll();
+        document.querySelector('.go-body').innerHTML = `<i>${reason}</i><br><br>Thousands were caught and turned back.<br>But they rose. And tried again. And again.<br>The road to freedom was paved by those<br>who refused to stop running.`;
+        show('goScreen');
+      }, 1000); // Wait for burst effect before closing iris
+    }
+
+    // ── INIT & INPUT ─────────────────────────────────
+    function startGame() {
+      initAudio();
+      if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
+
+      // Keep deaths if restarting from Game Over, reset if starting from Victory/Start
+      if (state.mode === 'start' || state.mode === 'victory') state.deaths = 0;
+
+      Object.assign(state, {
+        mode: 'playing', dist: 0, spd: 0, f: 0,
+        cpReached: 0, safeZone: W, startMs: Date.now(), boostTimer: 0,
+        playerHistory: [], currentWeather: 'clear',
+        currentEnv: 'forest', currentObsType: 'fallen_trees'
+      });
+
+      Object.assign(P, { y: 0, vy: 0, grounded: false, jumps: 2, runTime: 0, dead: false });
+      PURSUER.distanceBehind = 1000;
+      PURSUER.active = false;
+
+      // Reset Gemini stories so each new game gets FRESH unique scenarios
+      preloadedStories = [null, null, null, null, null];
+      isPrefetching = false;
+      // Reset whisper system
+      whisperQueue = []; currentWhisper = null; whisperTimer = 0;
+      // Start prefetching fresh stories for this run in background
+      prefetchAllStories();
+
+      OBS.length = 0; LANTS.length = 0; PARTS.length = 0; PUPS.length = 0;
+      nextObsX = W;
+      for (let i = 0; i < 5; i++) document.getElementById(`d${i}`).classList.remove('lit');
+
+      document.getElementById('tickerText').textContent = TICKER_FACTS[0];
+
+      hideAll();
+      show('hud'); show('progWrap'); show('tickerWrap');
+
+      if (window.innerWidth <= 768) show('touchZone');
+
+      if (state.deaths === 0) {
+        show('tutorial');
+        setTimeout(() => hide('tutorial'), 4000);
+      }
+    }
+
+    // Controls
+    document.addEventListener('keydown', e => {
+      if (e.code === 'Escape') togglePause();
+      if ((e.code === 'Space' || e.code === 'ArrowUp') && state.mode === 'playing') {
+        e.preventDefault(); P.jump();
+      }
+    });
+
+    // Touch and Swipe handling
+    let touchStartY = 0;
+    canvas.addEventListener('touchstart', e => {
+      if (state.mode === 'playing') {
+        touchStartY = e.changedTouches[0].screenY;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', e => {
+      if (state.mode === 'playing') {
+        e.preventDefault();
+        const dy = touchStartY - e.changedTouches[0].screenY;
+        // Jump on tap OR swipe up
+        if (dy > -10) P.jump();
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('pointerdown', e => {
+      if (state.mode === 'playing' && e.pointerType === 'mouse') {
+        e.preventDefault(); P.jump();
+      }
+    });
+
+    // Boot
+    resize();
+    hideAll();
+    show('startScreen');
+    spawnFireflies(30);
+    loop();
+  </script>
+</body>
+
+</html>
